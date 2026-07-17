@@ -1,0 +1,31 @@
+//
+//  MainTabBarController.swift
+//  SibersTestTask
+//
+//  Created by Vladislav Mishukov on 17.07.2026.
+//
+
+import UIKit
+
+final class MainTabBarController: UITabBarController {
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupTabs()
+    }
+    
+}
+
+// MARK: - PRIVATE METHODS
+private extension MainTabBarController {
+    
+    func setupTabs() {
+        let loaderViewController = LoaderViewController()
+        let savedFilesViewController = SavedFilesViewController()
+        
+        loaderViewController.tabBarItem = UITabBarItem(title: "Loader", image: UIImage(systemName: "square.and.arrow.up"), tag: 0)
+        savedFilesViewController.tabBarItem = UITabBarItem(title: "Saved", image: UIImage(systemName: "square.and.arrow.down"), tag: 1)
+        
+        viewControllers = [loaderViewController, savedFilesViewController]
+    }
+}
