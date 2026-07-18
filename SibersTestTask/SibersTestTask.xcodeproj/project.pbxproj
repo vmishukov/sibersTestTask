@@ -17,6 +17,7 @@
 		91A52F61300A342D0076FC08 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F60300A342D0076FC08 /* SettingsViewController.swift */; };
 		91A52F63300B4FA10076FC08 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F62300B4FA10076FC08 /* Extensions.swift */; };
 		91A52F66300B520E0076FC08 /* LoaderTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F65300B520E0076FC08 /* LoaderTableViewCell.swift */; };
+		91A52F69300B94910076FC08 /* SavedFilesTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F68300B94910076FC08 /* SavedFilesTableViewCell.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		91A52F60300A342D0076FC08 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		91A52F62300B4FA10076FC08 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		91A52F65300B520E0076FC08 /* LoaderTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoaderTableViewCell.swift; sourceTree = "<group>"; };
+		91A52F68300B94910076FC08 /* SavedFilesTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedFilesTableViewCell.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,14 +67,14 @@
 			isa = PBXGroup;
 			children = (
 				91A52F4E300A2B2D0076FC08 /* AppDelegate.swift */,
+				91A52F56300A2B2D0076FC08 /* SceneDelegate.swift */,
 				91A52F4F300A2B2D0076FC08 /* Assets.xcassets */,
 				91A52F50300A2B2D0076FC08 /* Info.plist */,
 				91A52F52300A2B2D0076FC08 /* LaunchScreen.storyboard */,
 				91A52F54300A2B2D0076FC08 /* MainTabBarController.swift */,
 				91A52F64300B51F80076FC08 /* Loader */,
-				91A52F55300A2B2D0076FC08 /* SavedFilesViewController.swift */,
+				91A52F67300B90D50076FC08 /* SavedFiles */,
 				91A52F60300A342D0076FC08 /* SettingsViewController.swift */,
-				91A52F56300A2B2D0076FC08 /* SceneDelegate.swift */,
 				91A52F62300B4FA10076FC08 /* Extensions.swift */,
 			);
 			path = SibersTestTask;
@@ -85,6 +87,15 @@
 				91A52F65300B520E0076FC08 /* LoaderTableViewCell.swift */,
 			);
 			path = Loader;
+			sourceTree = "<group>";
+		};
+		91A52F67300B90D50076FC08 /* SavedFiles */ = {
+			isa = PBXGroup;
+			children = (
+				91A52F55300A2B2D0076FC08 /* SavedFilesViewController.swift */,
+				91A52F68300B94910076FC08 /* SavedFilesTableViewCell.swift */,
+			);
+			path = SavedFiles;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -164,6 +175,7 @@
 				91A52F5C300A2B2D0076FC08 /* LoaderViewController.swift in Sources */,
 				91A52F5D300A2B2D0076FC08 /* MainTabBarController.swift in Sources */,
 				91A52F5E300A2B2D0076FC08 /* SavedFilesViewController.swift in Sources */,
+				91A52F69300B94910076FC08 /* SavedFilesTableViewCell.swift in Sources */,
 				91A52F5F300A2B2D0076FC08 /* SceneDelegate.swift in Sources */,
 				91A52F61300A342D0076FC08 /* SettingsViewController.swift in Sources */,
 				91A52F66300B520E0076FC08 /* LoaderTableViewCell.swift in Sources */,
