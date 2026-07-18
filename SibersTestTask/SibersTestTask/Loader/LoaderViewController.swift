@@ -32,6 +32,29 @@ final class LoaderViewController: UIViewController {
         return textField
     }()
     
+    private var downloadButton: UIButton = {
+        var configuration = UIButton.Configuration.filled()
+        var container = AttributeContainer()
+        container.font = .systemFont(ofSize: 18, weight: .semibold)
+        configuration.attributedTitle = AttributedString("Download", attributes: container)
+        let originalImage = UIImage(resource: .downloadIcon)
+        configuration.image = originalImage.resized(to: CGSize(width: 30, height: 30))
+        configuration.imagePadding = 4
+        let button = UIButton(configuration: configuration)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.tintColor = .systemBlue
+        button.titleLabel?.font = .systemFont(ofSize: 20, weight: .bold)
+        return button
+    }()
+    
+    private var downloadTableView: UITableView = {
+        let tableView = UITableView()
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.register(LoaderTableViewCell.self, forCellReuseIdentifier: LoaderTableViewCell.identifier)
+        tableView.allowsSelection = false
+        return tableView
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -58,7 +81,11 @@ private extension LoaderViewController {
     
     func setupUi() {
         view.addSubview(linkTextFiled)
+        view.addSubview(downloadButton)
+        view.addSubview(downloadTableView)
         linkTextFiled.delegate = self
+        downloadTableView.dataSource = self
+        downloadTableView.delegate = self
         view.addGestureRecognizer(UITapGestureRecognizer(target: self,
                                                          action: #selector(hideKeyboard)))
     }
@@ -68,7 +95,15 @@ private extension LoaderViewController {
             linkTextFiled.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             linkTextFiled.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             linkTextFiled.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            linkTextFiled.heightAnchor.constraint(equalToConstant: 50)
+            linkTextFiled.heightAnchor.constraint(equalToConstant: 50),
+            downloadButton.topAnchor.constraint(equalTo: linkTextFiled.bottomAnchor, constant: 16),
+            downloadButton.leadingAnchor.constraint(equalTo: linkTextFiled.leadingAnchor),
+            downloadButton.trailingAnchor.constraint(equalTo: linkTextFiled.trailingAnchor),
+            downloadButton.heightAnchor.constraint(equalToConstant: 50),
+            downloadTableView.topAnchor.constraint(equalTo: downloadButton.bottomAnchor, constant: 16),
+            downloadTableView.leadingAnchor.constraint(equalTo: downloadButton.leadingAnchor),
+            downloadTableView.trailingAnchor.constraint(equalTo: downloadButton.trailingAnchor),
+            downloadTableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -4)
         ])
     }
     
@@ -83,6 +118,34 @@ private extension LoaderViewController {
         settingsController.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(settingsController, animated: true)
     }
+}
+
+// MARK: - UITableViewDataSource
+extension LoaderViewController: UITableViewDataSource {
+    
+    func tableView(_ tableView: UITableView,
+                   numberOfRowsInSection section: Int) -> Int {
+        2
+    }
+    
+    func tableView(_ tableView: UITableView,
+                   cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cellRow = tableView.dequeueReusableCell(withIdentifier: LoaderTableViewCell.identifier, for: indexPath)
+        guard let loaderCell = cellRow as? LoaderTableViewCell else {
+            return cellRow
+        }
+        
+        if indexPath.row == 1 {
+            loaderCell.setupCell(with: "Kill Bill.mp4", and: "https://www.youtube.com/watch?v=KjDArqWy-xU")
+        }
+        
+        return loaderCell
+    }
+    
+}
+
+// MARK: - UITableViewDelegate
+extension LoaderViewController: UITableViewDelegate {
     
 }
 
@@ -94,7 +157,6 @@ extension LoaderViewController: UITextFieldDelegate {
         return true
     }
 }
-
 
 #Preview {
     LoaderViewController()

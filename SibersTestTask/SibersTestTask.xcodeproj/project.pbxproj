@@ -15,6 +15,8 @@
 		91A52F5E300A2B2D0076FC08 /* SavedFilesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F55300A2B2D0076FC08 /* SavedFilesViewController.swift */; };
 		91A52F5F300A2B2D0076FC08 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F56300A2B2D0076FC08 /* SceneDelegate.swift */; };
 		91A52F61300A342D0076FC08 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F60300A342D0076FC08 /* SettingsViewController.swift */; };
+		91A52F63300B4FA10076FC08 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F62300B4FA10076FC08 /* Extensions.swift */; };
+		91A52F66300B520E0076FC08 /* LoaderTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F65300B520E0076FC08 /* LoaderTableViewCell.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +30,8 @@
 		91A52F55300A2B2D0076FC08 /* SavedFilesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedFilesViewController.swift; sourceTree = "<group>"; };
 		91A52F56300A2B2D0076FC08 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		91A52F60300A342D0076FC08 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
+		91A52F62300B4FA10076FC08 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		91A52F65300B520E0076FC08 /* LoaderTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoaderTableViewCell.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,12 +69,22 @@
 				91A52F50300A2B2D0076FC08 /* Info.plist */,
 				91A52F52300A2B2D0076FC08 /* LaunchScreen.storyboard */,
 				91A52F54300A2B2D0076FC08 /* MainTabBarController.swift */,
-				91A52F53300A2B2D0076FC08 /* LoaderViewController.swift */,
+				91A52F64300B51F80076FC08 /* Loader */,
 				91A52F55300A2B2D0076FC08 /* SavedFilesViewController.swift */,
 				91A52F60300A342D0076FC08 /* SettingsViewController.swift */,
 				91A52F56300A2B2D0076FC08 /* SceneDelegate.swift */,
+				91A52F62300B4FA10076FC08 /* Extensions.swift */,
 			);
 			path = SibersTestTask;
+			sourceTree = "<group>";
+		};
+		91A52F64300B51F80076FC08 /* Loader */ = {
+			isa = PBXGroup;
+			children = (
+				91A52F53300A2B2D0076FC08 /* LoaderViewController.swift */,
+				91A52F65300B520E0076FC08 /* LoaderTableViewCell.swift */,
+			);
+			path = Loader;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -152,6 +166,8 @@
 				91A52F5E300A2B2D0076FC08 /* SavedFilesViewController.swift in Sources */,
 				91A52F5F300A2B2D0076FC08 /* SceneDelegate.swift in Sources */,
 				91A52F61300A342D0076FC08 /* SettingsViewController.swift in Sources */,
+				91A52F66300B520E0076FC08 /* LoaderTableViewCell.swift in Sources */,
+				91A52F63300B4FA10076FC08 /* Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
