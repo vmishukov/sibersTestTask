@@ -26,6 +26,13 @@ private extension MainTabBarController {
         loaderViewController.tabBarItem = UITabBarItem(title: "Loader", image: UIImage(systemName: "square.and.arrow.up"), tag: 0)
         savedFilesViewController.tabBarItem = UITabBarItem(title: "Saved", image: UIImage(systemName: "square.and.arrow.down"), tag: 1)
         
-        viewControllers = [loaderViewController, savedFilesViewController]
+        let loaderNavigationController = UINavigationController(rootViewController: loaderViewController)
+        let savedFilesNavigationController = UINavigationController(rootViewController: savedFilesViewController)
+        
+        viewControllers = [loaderNavigationController, savedFilesNavigationController]
     }
+}
+
+#Preview {
+    MainTabBarController()
 }
