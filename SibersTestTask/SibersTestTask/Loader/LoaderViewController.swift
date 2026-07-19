@@ -55,6 +55,19 @@ final class LoaderViewController: UIViewController {
         return tableView
     }()
     
+    private var downloadManager = DownloadNetworkManager()
+    private var loadedFilesManager: LoadedFilesManager
+    
+    init(loadedFilesManager: LoadedFilesManager) {
+        self.loadedFilesManager = loadedFilesManager
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -62,7 +75,6 @@ final class LoaderViewController: UIViewController {
         setupUi()
         setupConstraints()
     }
-    
 }
 
 // MARK: - PRIVATE METHODS
@@ -88,6 +100,7 @@ private extension LoaderViewController {
         downloadTableView.delegate = self
         view.addGestureRecognizer(UITapGestureRecognizer(target: self,
                                                          action: #selector(hideKeyboard)))
+        downloadButton.addTarget(self, action: #selector(downloadButtonTapped), for: .touchUpInside)
     }
     
     func setupConstraints() {
@@ -118,6 +131,29 @@ private extension LoaderViewController {
         settingsController.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(settingsController, animated: true)
     }
+    
+    @objc
+    func downloadButtonTapped() {
+        guard let textUrl = linkTextFiled.text else { return }
+        Task {
+            do {
+                let result = try await downloadManager.downloadFile(from: textUrl)
+                try loadedFilesManager.addToTheDocumentDirectory(temporaryUrl: result.0,
+                                                                 fileName: result.1)
+            } catch {
+                await MainActor.run {
+                    showErrorAlert(with: error.localizedDescription)
+                }
+            }
+        }
+    }
+    
+    func showErrorAlert(with message: String) {
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        present(alert, animated: true, completion: nil)
+    }
+    
 }
 
 // MARK: - UITableViewDataSource
@@ -159,5 +195,5 @@ extension LoaderViewController: UITextFieldDelegate {
 }
 
 #Preview {
-    LoaderViewController()
+    LoaderViewController(loadedFilesManager: LoadedFilesManager())
 }

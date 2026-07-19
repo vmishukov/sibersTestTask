@@ -20,8 +20,10 @@ final class MainTabBarController: UITabBarController {
 private extension MainTabBarController {
     
     func setupTabs() {
-        let loaderViewController = LoaderViewController()
         let savedFilesViewController = SavedFilesViewController()
+        let loadedFilesManager = LoadedFilesManager()
+        loadedFilesManager.delegate = savedFilesViewController
+        let loaderViewController = LoaderViewController(loadedFilesManager: loadedFilesManager)
         
         loaderViewController.tabBarItem = UITabBarItem(title: "Loader", image: UIImage(systemName: "square.and.arrow.up"), tag: 0)
         savedFilesViewController.tabBarItem = UITabBarItem(title: "Saved", image: UIImage(systemName: "square.and.arrow.down"), tag: 1)

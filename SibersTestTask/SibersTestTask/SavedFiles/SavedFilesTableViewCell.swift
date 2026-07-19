@@ -31,6 +31,13 @@ final class SavedFilesTableViewCell: UITableViewCell {
     }
 }
 
+extension SavedFilesTableViewCell {
+    
+    func configure(with title: String) {
+        titleLabel.text = title
+    }
+}
+
 // MARK: - PRIVATE EXTENSION
 private extension SavedFilesTableViewCell {
     
