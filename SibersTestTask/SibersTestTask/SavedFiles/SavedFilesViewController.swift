@@ -17,6 +17,8 @@ final class SavedFilesViewController: UIViewController {
         return tableView
     }()
     
+    var savedFiles: [URL] = []
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -59,13 +61,24 @@ extension SavedFilesViewController: UITableViewDelegate {
 extension SavedFilesViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        2
+        savedFiles.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: SavedFilesTableViewCell.identifier, for: indexPath)
         guard let fileCell = cell as? SavedFilesTableViewCell else { return cell }
+        fileCell.configure(with: savedFiles[indexPath.row].absoluteString)
         return fileCell
+    }
+    
+}
+
+// MARK: - LoadedFilesManagerDelegate
+extension SavedFilesViewController: LoadedFilesManagerDelegate {
+    
+    func loadedFilesManagerDirectoryUpdated(_ manager: LoadedFilesManager, fileUrls: [URL]) {
+        savedFiles = fileUrls
+        savedFilesTableView.reloadData()
     }
     
 }
