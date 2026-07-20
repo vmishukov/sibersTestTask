@@ -57,6 +57,8 @@ final class LoaderViewController: UIViewController {
     
     private var downloadManager = DownloadNetworkManager()
     private var loadedFilesManager: LoadedFilesManager
+    private var activeDownloadTasks: [String: Task<Void, Never>] = [:]
+    private var downloads: [DownloadItem] = []
     
     init(loadedFilesManager: LoadedFilesManager) {
         self.loadedFilesManager = loadedFilesManager
@@ -135,17 +137,70 @@ private extension LoaderViewController {
     @objc
     func downloadButtonTapped() {
         guard let textUrl = linkTextFiled.text else { return }
-        Task {
+        guard activeDownloadTasks[textUrl] == nil else {
+            return showErrorAlert(with: "Loading in progress")
+        }
+        addLoadTask(textUrl: textUrl)
+    }
+    
+    func addLoadTask(textUrl: String) {
+        let loadTask = Task {
             do {
-                let result = try await downloadManager.downloadFile(from: textUrl)
-                try loadedFilesManager.addToTheDocumentDirectory(temporaryUrl: result.0,
-                                                                 fileName: result.1)
+                let stream = try await downloadManager.downloadFile(from: textUrl)
+                let fetchedExtension = try await downloadManager.fetchFileExtension(from: textUrl)
+                await MainActor.run {
+                    addDownloadModel(textUrl: textUrl, fethedExtension: fetchedExtension)
+                }
+                try await downloadFileWithProgress(stream: stream, textUrl: textUrl)
             } catch {
                 await MainActor.run {
                     showErrorAlert(with: error.localizedDescription)
                 }
             }
+            activeDownloadTasks.removeValue(forKey: textUrl)
+            await MainActor.run {
+                downloads.removeAll(where: { $0.url == textUrl})
+                downloadTableView.reloadData()
+            }
+            
         }
+        activeDownloadTasks[textUrl] = loadTask
+    }
+    
+    func addDownloadModel(textUrl: String, fethedExtension: String?) {
+        var proposedName = URL(string: textUrl)?.lastPathComponent ?? "Скачиваемый файл"
+        if !proposedName.contains("."), let fethedExtension {
+            proposedName = "\(proposedName).\(fethedExtension)"
+        }
+        let newDownload = DownloadItem(url: textUrl,
+                                       title: proposedName)
+        downloads.append(newDownload)
+        downloadTableView.reloadData()
+    }
+    
+    func downloadFileWithProgress(stream: AsyncStream<DownloadStatus>,
+                                  textUrl: String) async throws {
+        for await status in stream {
+            switch status {
+            case .progress(let fraction):
+                await MainActor.run {
+                    updateTableCell(for: textUrl, with: Float(fraction))
+                }
+            case .success(let localURL, let fileName):
+                try loadedFilesManager.addToTheDocumentDirectory(temporaryUrl: localURL,
+                                                                 fileName: fileName)
+            case .failure(let error):
+                throw error
+            }
+        }
+    }
+    
+    func updateTableCell(for textUrl: String, with progress: Float) {
+        guard
+            let modelIndex = downloads.firstIndex(where: { $0.url == textUrl })
+        else { return }
+        downloads[modelIndex].progress = progress
+        downloadTableView.reloadRows(at: [IndexPath(row: modelIndex, section: 0)], with: .none)
     }
     
     func showErrorAlert(with message: String) {
@@ -161,7 +216,7 @@ extension LoaderViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView,
                    numberOfRowsInSection section: Int) -> Int {
-        2
+        downloads.count
     }
     
     func tableView(_ tableView: UITableView,
@@ -171,9 +226,7 @@ extension LoaderViewController: UITableViewDataSource {
             return cellRow
         }
         
-        if indexPath.row == 1 {
-            loaderCell.setupCell(with: "Kill Bill.mp4", and: "https://www.youtube.com/watch?v=KjDArqWy-xU")
-        }
+        loaderCell.setupCell(with: downloads[indexPath.row])
         
         return loaderCell
     }

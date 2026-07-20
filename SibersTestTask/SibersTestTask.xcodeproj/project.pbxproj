@@ -20,6 +20,7 @@
 		91A52F69300B94910076FC08 /* SavedFilesTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F68300B94910076FC08 /* SavedFilesTableViewCell.swift */; };
 		91A52F6B300BAA3B0076FC08 /* DownloadNetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F6A300BAA3B0076FC08 /* DownloadNetworkManager.swift */; };
 		91A52F6D300BAC470076FC08 /* LoadedFilesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F6C300BAC470076FC08 /* LoadedFilesManager.swift */; };
+		91A52F71300E06C80076FC08 /* DownloadItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F70300E06C80076FC08 /* DownloadItem.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,7 @@
 		91A52F68300B94910076FC08 /* SavedFilesTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedFilesTableViewCell.swift; sourceTree = "<group>"; };
 		91A52F6A300BAA3B0076FC08 /* DownloadNetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadNetworkManager.swift; sourceTree = "<group>"; };
 		91A52F6C300BAC470076FC08 /* LoadedFilesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadedFilesManager.swift; sourceTree = "<group>"; };
+		91A52F70300E06C80076FC08 /* DownloadItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadItem.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +77,7 @@
 				91A52F4F300A2B2D0076FC08 /* Assets.xcassets */,
 				91A52F50300A2B2D0076FC08 /* Info.plist */,
 				91A52F52300A2B2D0076FC08 /* LaunchScreen.storyboard */,
+				91A52F6F300E043D0076FC08 /* Model */,
 				91A52F6E300BAD890076FC08 /* Managers */,
 				91A52F54300A2B2D0076FC08 /* MainTabBarController.swift */,
 				91A52F64300B51F80076FC08 /* Loader */,
@@ -110,6 +113,14 @@
 				91A52F6C300BAC470076FC08 /* LoadedFilesManager.swift */,
 			);
 			path = Managers;
+			sourceTree = "<group>";
+		};
+		91A52F6F300E043D0076FC08 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				91A52F70300E06C80076FC08 /* DownloadItem.swift */,
+			);
+			path = Model;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -193,6 +204,7 @@
 				91A52F6B300BAA3B0076FC08 /* DownloadNetworkManager.swift in Sources */,
 				91A52F69300B94910076FC08 /* SavedFilesTableViewCell.swift in Sources */,
 				91A52F5F300A2B2D0076FC08 /* SceneDelegate.swift in Sources */,
+				91A52F71300E06C80076FC08 /* DownloadItem.swift in Sources */,
 				91A52F61300A342D0076FC08 /* SettingsViewController.swift in Sources */,
 				91A52F66300B520E0076FC08 /* LoaderTableViewCell.swift in Sources */,
 				91A52F63300B4FA10076FC08 /* Extensions.swift in Sources */,
