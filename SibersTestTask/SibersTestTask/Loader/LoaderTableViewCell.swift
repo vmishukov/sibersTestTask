@@ -72,10 +72,10 @@ final class LoaderTableViewCell: UITableViewCell {
 // MARK: - PUBLIC METHODS
 extension LoaderTableViewCell {
     
-    func setupCell(with title: String, and url: String) {
-        titleLabel.text = title
-        urlLaberl.text = url
-        progressView.progress = 0.1
+    func setupCell(with model: DownloadItem) {
+        titleLabel.text = model.title
+        urlLaberl.text = model.url
+        progressView.progress = model.progress
     }
     
 }
