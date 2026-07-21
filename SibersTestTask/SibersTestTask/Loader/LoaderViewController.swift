@@ -137,8 +137,8 @@ private extension LoaderViewController {
     @objc
     func downloadButtonTapped() {
         guard let textUrl = linkTextFiled.text else { return }
-        guard activeDownloadTasks[textUrl] == nil else {
-            return showErrorAlert(with: "Loading in progress")
+        guard !downloads.contains(where: { $0.url == textUrl }) else {
+            return showErrorAlert(with: "File already loading")
         }
         addLoadTask(textUrl: textUrl)
     }
@@ -158,11 +158,6 @@ private extension LoaderViewController {
                 }
             }
             activeDownloadTasks.removeValue(forKey: textUrl)
-            await MainActor.run {
-                downloads.removeAll(where: { $0.url == textUrl})
-                downloadTableView.reloadData()
-            }
-            
         }
         activeDownloadTasks[textUrl] = loadTask
     }
@@ -189,18 +184,47 @@ private extension LoaderViewController {
             case .success(let localURL, let fileName):
                 try loadedFilesManager.addToTheDocumentDirectory(temporaryUrl: localURL,
                                                                  fileName: fileName)
+                await MainActor.run {
+                    downloads.removeAll(where: { $0.url == textUrl})
+                    downloadTableView.reloadData()
+                }
             case .failure(let error):
+                await MainActor.run {
+                    downloads.removeAll(where: { $0.url == textUrl})
+                    downloadTableView.reloadData()
+                }
                 throw error
+            case .pausedByRequest:
+                await MainActor.run {
+                    updateTableCell(for: textUrl, with: true)
+                }
             }
         }
     }
     
     func updateTableCell(for textUrl: String, with progress: Float) {
-        guard
-            let modelIndex = downloads.firstIndex(where: { $0.url == textUrl })
-        else { return }
+        guard let modelIndex = downloads.firstIndex(where: { $0.url == textUrl }) else { return }
         downloads[modelIndex].progress = progress
-        downloadTableView.reloadRows(at: [IndexPath(row: modelIndex, section: 0)], with: .none)
+        
+        let indexPath = IndexPath(row: modelIndex, section: 0)
+        guard let cell = downloadTableView.cellForRow(at: indexPath) as? LoaderTableViewCell else {
+            return
+        }
+        cell.updateProgress(progress)
+        guard downloads[modelIndex].isPaused else { return }
+        downloads[modelIndex].isPaused = false
+        cell.setPauseStatus(false)
+    }
+    
+    func updateTableCell(for textUrl: String, with pauseStatus: Bool) {
+        guard let modelIndex = downloads.firstIndex(where: { $0.url == textUrl }) else { return }
+        downloads[modelIndex].isPaused = pauseStatus
+        
+        let indexPath = IndexPath(row: modelIndex, section: 0)
+        guard let cell = downloadTableView.cellForRow(at: indexPath) as? LoaderTableViewCell else {
+            return
+        }
+        cell.setPauseStatus(pauseStatus)
     }
     
     func showErrorAlert(with message: String) {
@@ -225,9 +249,25 @@ extension LoaderViewController: UITableViewDataSource {
         guard let loaderCell = cellRow as? LoaderTableViewCell else {
             return cellRow
         }
-        
-        loaderCell.setupCell(with: downloads[indexPath.row])
-        
+        let itemModel = downloads[indexPath.row]
+        loaderCell.setupCell(with: itemModel)
+        loaderCell.pauseContinueAction = { [weak self] in
+            Task {
+                guard let self else { return }
+                if self.downloads[indexPath.row].isPaused {
+                    do {
+                        let stream = try await self.downloadManager.downloadFile(from: itemModel.url)
+                        try await self.downloadFileWithProgress(stream: stream, textUrl: itemModel.url)
+                    } catch {
+                        await MainActor.run {
+                            self.showErrorAlert(with: error.localizedDescription)
+                        }
+                    }
+                } else {
+                    await self.downloadManager.pauseDownload(for: itemModel.url)
+                }
+            }
+        }
         return loaderCell
     }
     

@@ -22,9 +22,9 @@ final class LoaderTableViewCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = "https://www.youtube.com/watch?v=oIAMxQ1KLiI"
-        label.font = .systemFont(ofSize: 12, weight: .light)
+        label.font = .systemFont(ofSize: 9, weight: .light)
         label.textColor = .systemGray
-        label.numberOfLines = 0
+        label.numberOfLines = 4
         return label
     }()
     
@@ -56,6 +56,8 @@ final class LoaderTableViewCell: UITableViewCell {
         return label
     }()
     
+    var pauseContinueAction: (() -> Void)?
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         initialSetup()
@@ -71,6 +73,17 @@ final class LoaderTableViewCell: UITableViewCell {
 
 // MARK: - PUBLIC METHODS
 extension LoaderTableViewCell {
+    
+    func setPauseStatus(_ isPaused: Bool) {
+        let playImage = UIImage(systemName: "play.fill")
+        let pauseImage = UIImage(systemName: "pause.fill")
+        pauseContinueButton.configuration?.image = isPaused ? playImage : pauseImage
+        pauseContinueButton.isEnabled = true
+    }
+    
+    func updateProgress(_ progress: Float) {
+        progressView.progress = progress
+    }
     
     func setupCell(with model: DownloadItem) {
         titleLabel.text = model.title
@@ -100,10 +113,10 @@ private extension LoaderTableViewCell {
             urlLaberl.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             urlLaberl.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             urlLaberl.trailingAnchor.constraint(equalTo: contentView.centerXAnchor),
-            urlLaberl.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -4),
+            urlLaberl.bottomAnchor.constraint(lessThanOrEqualTo: progressView.topAnchor, constant: -4),
             progressView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             progressView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            progressView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            progressView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -2),
             pauseContinueButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             pauseContinueButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
             pauseContinueButton.heightAnchor.constraint(equalToConstant: 50),
@@ -117,6 +130,7 @@ private extension LoaderTableViewCell {
     
     @objc
     func pauseContinueButtonDidTap() {
-        pauseContinueButton.configuration?.image = UIImage(systemName: "play.fill")
+        pauseContinueAction?()
+        pauseContinueButton.isEnabled = false
     }
 }

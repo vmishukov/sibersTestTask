@@ -14,6 +14,7 @@ enum ExtensionError: Error {
 
 enum DownloadStatus {
     case progress(Double)
+    case pausedByRequest
     case success(localURL: URL, fileName: String?)
     case failure(Error)
 }
@@ -22,27 +23,51 @@ actor DownloadNetworkManager: NSObject {
     
     private var continuations: [URL: AsyncStream<DownloadStatus>.Continuation] = [:]
     
+    private var resumeDataStore: [URL: Data] = [:]
+    private var activeDownloadTasks: [URL: URLSessionDownloadTask] = [:]
+    
     private lazy var session: URLSession = {
         let configuration = URLSessionConfiguration.default
         return URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
     }()
     
-    // Главный метод для запуска загрузки
     func downloadFile(from urlString: String) throws -> AsyncStream<DownloadStatus> {
         guard let url = URL(string: urlString) else {
             throw URLError(.badURL)
         }
         
-        // Создаем AsyncStream, который будет возвращать прогресс и результат
         return AsyncStream { continuation in
             self.continuations[url] = continuation
             
-            let task = session.downloadTask(with: url)
+            let task: URLSessionDownloadTask
+            
+            if let resumeData = self.resumeDataStore[url] {
+                task = session.downloadTask(withResumeData: resumeData)
+                self.resumeDataStore.removeValue(forKey: url)
+            } else {
+                task = session.downloadTask(with: url)
+            }
+            
+            self.activeDownloadTasks[url] = task
             task.resume()
             
-            // Если клиент отменит Swift Task, отменяем и загрузку сессии
             continuation.onTermination = { _ in
-                task.cancel()
+                // Здесь ничего не делаем, отмену контролируем вручную, чтобы не ломать логику паузы
+            }
+        }
+    }
+    
+    // НОВЫЙ МЕТОД: Постановка на паузу
+    func pauseDownload(for urlString: String) {
+        guard let url = URL(string: urlString),
+              let task = activeDownloadTasks[url] else { return }
+        task.cancel { [weak self] resumeDataOrNil in
+            guard let resumeData = resumeDataOrNil else { return }
+            
+            Task { [weak self] in
+                await self?.saveResumeData(resumeData, for: url)
+                await self?.send(status: .pausedByRequest, for: url)
+                await self?.finishStream(for: url)
             }
         }
     }
@@ -138,12 +163,17 @@ extension DownloadNetworkManager: URLSessionDownloadDelegate {
 // MARK: - PRIVATE METHODS
 private extension DownloadNetworkManager {
     
-    private func send(status: DownloadStatus, for url: URL) {
+    func send(status: DownloadStatus, for url: URL) {
         continuations[url]?.yield(status)
     }
     
-    private func finishStream(for url: URL) {
+    func finishStream(for url: URL) {
         continuations[url]?.finish()
         continuations.removeValue(forKey: url)
+    }
+    
+    func saveResumeData(_ data: Data, for url: URL) {
+        resumeDataStore[url] = data
+        activeDownloadTasks.removeValue(forKey: url)
     }
 }
