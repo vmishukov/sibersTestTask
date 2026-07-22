@@ -39,7 +39,7 @@ final class LoaderTableViewCell: UITableViewCell {
     
     private var pauseContinueButton: UIButton = {
         var config = UIButton.Configuration.filled()
-        config.image = UIImage(systemName: "pause")
+        config.image = UIImage(systemName: "pause.fill")
         let button = UIButton(configuration: config)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.tintColor = .systemMint
@@ -114,14 +114,15 @@ private extension LoaderTableViewCell {
             urlLaberl.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             urlLaberl.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             urlLaberl.trailingAnchor.constraint(equalTo: contentView.centerXAnchor),
-            urlLaberl.bottomAnchor.constraint(lessThanOrEqualTo: progressView.topAnchor, constant: -16),
+            urlLaberl.bottomAnchor.constraint(lessThanOrEqualTo: progressView.topAnchor, constant: -8),
             progressView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             progressView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             progressView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -2),
-            pauseContinueButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            pauseContinueButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
             pauseContinueButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
-            pauseContinueButton.heightAnchor.constraint(equalToConstant: 50),
-            pauseContinueButton.widthAnchor.constraint(equalToConstant: 50),
+            pauseContinueButton.heightAnchor.constraint(equalToConstant: 48),
+            pauseContinueButton.widthAnchor.constraint(equalToConstant: 48),
+            pauseContinueButton.bottomAnchor.constraint(lessThanOrEqualTo: progressView.topAnchor, constant: -8),
             infoLabel.topAnchor.constraint(equalTo: titleLabel.topAnchor),
             infoLabel.leadingAnchor.constraint(equalTo: contentView.centerXAnchor, constant: 4),
             infoLabel.trailingAnchor.constraint(equalTo: pauseContinueButton.leadingAnchor, constant: -4),

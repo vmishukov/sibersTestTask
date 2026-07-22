@@ -26,7 +26,6 @@ final class SavedFilesViewController: UIViewController {
         setupUi()
         setupConstraints()
     }
-    
 }
 
 // MARK: - PRIVATE METHODS
@@ -54,7 +53,18 @@ private extension SavedFilesViewController {
 
 // MARK: - UITableViewDelegate
 extension SavedFilesViewController: UITableViewDelegate {
-    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        let fileURL = savedFiles[indexPath.row]
+        let webVC = FileWebViewController(fileURL: fileURL)
+        
+        if let navigationController = navigationController {
+            navigationController.pushViewController(webVC, animated: true)
+        } else {
+            let navController = UINavigationController(rootViewController: webVC)
+            present(navController, animated: true)
+        }
+    }
 }
 
 // MARK: - UITableViewDataSource
@@ -70,7 +80,6 @@ extension SavedFilesViewController: UITableViewDataSource {
         fileCell.configure(with: savedFiles[indexPath.row].absoluteString)
         return fileCell
     }
-    
 }
 
 // MARK: - LoadedFilesManagerDelegate
@@ -80,7 +89,6 @@ extension SavedFilesViewController: LoadedFilesManagerDelegate {
         savedFiles = fileUrls
         savedFilesTableView.reloadData()
     }
-    
 }
 
 #Preview {
