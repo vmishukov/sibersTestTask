@@ -41,7 +41,7 @@ actor DownloadNetworkManager: NSObject {
     private var activeFileTasks: [URL: Task<Void, Never>] = [:]
     private var downloadedSegmentsMap: [URL: [Int: Bool]] = [:]
     
-    private var fileURLsMap: [URL: URL] = [:]
+    private(set) var fileURLsMap: [URL: URL] = [:]
     
     private var activeSegmentTasks: [URL: [Task<Void, Never>]] = [:]
     private var activeSegmentsCountPerURL: [URL: Int] = [:]
@@ -50,7 +50,6 @@ actor DownloadNetworkManager: NSObject {
     
     private let segmentSize: Int64 = 5 * 1024 * 1024
     private let maxConcurrentSegments = 5
-    private let maxSegmentsCount = 5
     private var maxRetries = 3
     
     private lazy var session: URLSession = {
@@ -71,6 +70,15 @@ actor DownloadNetworkManager: NSObject {
                 do {
                     let metadata = try await self.getFileMetadata(from: url)
                     let totalSegments = Int(ceil(Double(metadata.size) / Double(self.segmentSize)))
+                    if var existingMap = downloadedSegmentsMap[url] {
+                        for i in 0..<totalSegments {
+                            if existingMap[i] == nil { existingMap[i] = false }
+                        }
+                        downloadedSegmentsMap[url] = existingMap
+                    } else {
+                        initializeSegmentsMapIfNeeded(for: url, totalSegments: totalSegments)
+                    }
+                    
                     let finalFileName = self.makeFileName(for: url, extension: metadata.ext)
                     
                     self.initializeSegmentsMapIfNeeded(for: url, totalSegments: totalSegments)
@@ -83,19 +91,29 @@ actor DownloadNetworkManager: NSObject {
                         self.fileURLsMap[url] = destinationURL
                     }
                     
+                    // Если уже есть открытый дескриптор для этого URL, закрываем его (на всякий случай)
+                    if let oldHandle = activeFileHandles[url] {
+                        try? oldHandle.close()
+                        activeFileHandles.removeValue(forKey: url)
+                    }
+                    
                     guard let fileHandle = try? FileHandle(forWritingTo: destinationURL) else {
                         throw URLError(.cannotCreateFile)
                     }
                     activeFileHandles[url] = fileHandle
-                    
+                    defer {
+                        // При выходе из области видимости (успех/ошибка) закроем дескриптор, если он ещё не закрыт
+                        if activeFileHandles[url] == fileHandle {
+                            try? fileHandle.close()
+                            activeFileHandles.removeValue(forKey: url)
+                        }
+                    }
                     try await self.runDispatcherLoop(
                         url: url,
                         fileSize: metadata.size,
                         totalSegments: totalSegments,
                         fileHandle: fileHandle
                     )
-                    
-                    try? fileHandle.close()
                     
                     if !Task.isCancelled {
                         // Очищаем кэш только при 100% УСПЕХЕ
@@ -145,6 +163,47 @@ actor DownloadNetworkManager: NSObject {
         guard let url = URL(string: urlString) else { return nil }
         let metadata = try await getFileMetadata(from: url)
         return metadata.ext
+    }
+    
+    // MARK: Сохранение/восстановление состояния
+    
+    func saveState() async throws -> Data {
+        var state: [[String: Any]] = []
+        for (url, fileURL) in fileURLsMap {
+            guard let segments = downloadedSegmentsMap[url] else { continue }
+            let segmentIndices = segments.filter { $0.value }.map { $0.key }
+            let dict: [String: Any] = [
+                "url": url.absoluteString,
+                "filePath": fileURL.path,
+                "downloadedSegments": segmentIndices
+            ]
+            state.append(dict)
+        }
+        return try JSONSerialization.data(withJSONObject: state, options: .prettyPrinted)
+    }
+
+    
+    func loadState(from data: Data) {
+        guard let array = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return }
+        for item in array {
+            guard let urlString = item["url"] as? String,
+                  let url = URL(string: urlString),
+                  let filePath = item["filePath"] as? String,
+                  let segments = item["downloadedSegments"] as? [Int]
+            else { continue }
+            
+            let fileURL = URL(fileURLWithPath: filePath)
+            // Проверяем, существует ли временный файл
+            guard FileManager.default.fileExists(atPath: fileURL.path) else { continue }
+            
+            fileURLsMap[url] = fileURL
+            
+            // Восстанавливаем карту сегментов. Общее число сегментов получим позже при запуске downloadFile.
+            // Пока заполним известные завершённые.
+            var map = [Int: Bool]()
+            for idx in segments { map[idx] = true }
+            downloadedSegmentsMap[url] = map
+        }
     }
 }
 
@@ -236,7 +295,6 @@ private extension DownloadNetworkManager {
             if Task.isCancelled { return }
             do {
                 let segmentData = try await self.downloadRangeWithTimeout(from: url, start: start, end: end, seconds: 10)
-                // ИСПРАВЛЕНО: атомарная запись через FileWriter
                 try await fileWriter.write(data: segmentData, at: UInt64(start))
                 self.updateSegmentState(url: url, index: index, isDownloaded: true)
                 isSuccess = true
@@ -248,37 +306,52 @@ private extension DownloadNetworkManager {
             }
         }
         
-        // Обновление прогресса после попыток (activeCount теперь в акторе)
-        let updatedDownloaded = (try? self.getDownloadedCount(for: url)) ?? 0
-        let remainingSegments = totalSegments - updatedDownloaded
+        // Обновляем прогресс в любом случае
+        let downloaded = (try? self.getDownloadedCount(for: url)) ?? 0
+        let remainingSegments = totalSegments - downloaded
         let currentExpectedActive = min(maxConcurrentSegments, remainingSegments)
         
         if isSuccess {
-            let newProgress = Float(updatedDownloaded * Int(segmentSize)) / Float(fileSize)
-            let progressModel = ProgressModel(totalSegments: totalSegments,
-                                              progress: min(1.0, newProgress),
-                                              downloadedSegments: updatedDownloaded,
-                                              activeSegments: activeSegmentsCountPerURL[url] ?? 0,
-                                              expectedActive: currentExpectedActive)
-            continuations[url]?.yield(.progress(progressModel))
+            let progress = Float(downloaded * Int(segmentSize)) / Float(fileSize)
+            let model = ProgressModel(totalSegments: totalSegments,
+                                      progress: min(1.0, progress),
+                                      downloadedSegments: downloaded,
+                                      activeSegments: activeSegmentsCountPerURL[url] ?? 0,
+                                      expectedActive: currentExpectedActive)
+            continuations[url]?.yield(.progress(model))
         } else {
-            // Откатываем индекс следующего сегмента (метод актора)
-            self.resetNextSegmentIndex(for: url, to: index)
+            // Неудачный сегмент: откатываем индекс, шлём ошибку, но НЕ чистим состояние!
+            resetNextSegmentIndex(for: url, to: index)
             
-            let errProgress = Float(updatedDownloaded * Int(segmentSize)) / Float(fileSize)
-            let progressModel = ProgressModel(totalSegments: totalSegments,
-                                              progress: min(1.0, errProgress),
-                                              downloadedSegments: updatedDownloaded,
-                                              activeSegments: activeSegmentsCountPerURL[url] ?? 0,
-                                              expectedActive: currentExpectedActive)
-            continuations[url]?.yield(.progress(progressModel))
+            let progress = Float(downloaded * Int(segmentSize)) / Float(fileSize)
+            let model = ProgressModel(totalSegments: totalSegments,
+                                      progress: min(1.0, progress),
+                                      downloadedSegments: downloaded,
+                                      activeSegments: activeSegmentsCountPerURL[url] ?? 0,
+                                      expectedActive: currentExpectedActive)
+            continuations[url]?.yield(.progress(model))
             
+            // Даем небольшую паузу, чтобы UI успел обновиться
             try? await Task.sleep(nanoseconds: 800_000_000)
             
             let finalError = lastError ?? URLError(.networkConnectionLost)
             continuations[url]?.yield(.failure(finalError))
+            
+            // Завершаем стрим для этого URL, но НЕ удаляем downloadedSegmentsMap, fileURLsMap и т.д.
+            // Это позволит при следующем вызове downloadFile продолжить с того же места.
+            if let handle = activeFileHandles[url] {
+                try? handle.close()
+                activeFileHandles.removeValue(forKey: url)
+            }
+            // Отменяем только задачу этого файла, но не чистим карты.
             activeFileTasks[url]?.cancel()
-            finishStream(for: url)
+            activeFileTasks.removeValue(forKey: url)
+            
+            continuations[url]?.finish()
+            continuations.removeValue(forKey: url)
+            activeSegmentsCountPerURL.removeValue(forKey: url)
+            nextSegmentIndexPerURL.removeValue(forKey: url)
+            // ⚠️ downloadedSegmentsMap и fileURLsMap сохраняем!
         }
     }
     
@@ -317,21 +390,13 @@ private extension DownloadNetworkManager {
     private func getMetadataViaGet(from url: URL) async throws -> (Int64, String?) {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
+        request.setValue("Mozilla/5.0 ...", forHTTPHeaderField: "User-Agent")
+        request.setValue("text/html,application/xhtml+xml,...", forHTTPHeaderField: "Accept")
         
-        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
-        request.setValue("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", forHTTPHeaderField: "Accept")
-        
-        let configuration = URLSessionConfiguration.ephemeral
-        let shortSession = URLSession(configuration: configuration)
-        
-        // Запускаем сетевой запрос данных
-        let (data, response) = try await shortSession.data(for: request)
-        
+        let (_, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw ExtensionError.invalidResponse
         }
-        
-        // Для GET запроса expectedContentLength работает стабильно на любых серверах
         let fileSize = httpResponse.expectedContentLength
         guard fileSize > 0 else { throw ExtensionError.cannotDetermineSize }
         
@@ -339,7 +404,6 @@ private extension DownloadNetworkManager {
         if let mimeType = httpResponse.mimeType, let utType = UTType(mimeType: mimeType) {
             fileExtension = utType.preferredFilenameExtension
         }
-        
         return (fileSize, fileExtension)
     }
     

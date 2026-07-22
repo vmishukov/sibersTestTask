@@ -76,6 +76,12 @@ final class LoaderViewController: UIViewController {
         setupNavigationBar()
         setupUi()
         setupConstraints()
+        setupBackgroundObservers()
+        restoreDownloadsIfNeeded()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 }
 
@@ -238,6 +244,48 @@ private extension LoaderViewController {
         present(alert, animated: true, completion: nil)
     }
     
+    func restoreDownloadsIfNeeded() {
+        Task {
+            let stateURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("downloadState.json")
+            guard let data = try? Data(contentsOf: stateURL) else { return }
+            
+            await downloadManager.loadState(from: data)
+            for url in await downloadManager.fileURLsMap.keys {
+                let urlString = url.absoluteString
+                addLoadTask(textUrl: urlString)
+            }
+            try? FileManager.default.removeItem(at: stateURL)
+        }
+    }
+    
+    @objc
+    private func appDidEnterBackground() {
+        final class TaskID { var value: UIBackgroundTaskIdentifier = .invalid }
+        let taskID = TaskID()
+        
+        taskID.value = UIApplication.shared.beginBackgroundTask {
+            UIApplication.shared.endBackgroundTask(taskID.value)
+        }
+        
+        Task {
+            if let stateData = try? await downloadManager.saveState() {
+                let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                    .appendingPathComponent("downloadState.json")
+                try? stateData.write(to: url)
+            }
+            UIApplication.shared.endBackgroundTask(taskID.value)
+        }
+    }
+    
+    private func setupBackgroundObservers() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+    }
 }
 
 // MARK: - UITableViewDataSource
