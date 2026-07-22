@@ -21,6 +21,7 @@
 		91A52F6B300BAA3B0076FC08 /* DownloadNetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F6A300BAA3B0076FC08 /* DownloadNetworkManager.swift */; };
 		91A52F6D300BAC470076FC08 /* LoadedFilesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F6C300BAC470076FC08 /* LoadedFilesManager.swift */; };
 		91A52F71300E06C80076FC08 /* DownloadItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F70300E06C80076FC08 /* DownloadItem.swift */; };
+		91DC18223010C5850053487E /* FileWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91DC18213010C5850053487E /* FileWebViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 		91A52F6A300BAA3B0076FC08 /* DownloadNetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadNetworkManager.swift; sourceTree = "<group>"; };
 		91A52F6C300BAC470076FC08 /* LoadedFilesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadedFilesManager.swift; sourceTree = "<group>"; };
 		91A52F70300E06C80076FC08 /* DownloadItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadItem.swift; sourceTree = "<group>"; };
+		91DC18213010C5850053487E /* FileWebViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWebViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +84,7 @@
 				91A52F54300A2B2D0076FC08 /* MainTabBarController.swift */,
 				91A52F64300B51F80076FC08 /* Loader */,
 				91A52F67300B90D50076FC08 /* SavedFiles */,
+				91DC18213010C5850053487E /* FileWebViewController.swift */,
 				91A52F60300A342D0076FC08 /* SettingsViewController.swift */,
 				91A52F62300B4FA10076FC08 /* Extensions.swift */,
 			);
@@ -207,6 +210,7 @@
 				91A52F71300E06C80076FC08 /* DownloadItem.swift in Sources */,
 				91A52F61300A342D0076FC08 /* SettingsViewController.swift in Sources */,
 				91A52F66300B520E0076FC08 /* LoaderTableViewCell.swift in Sources */,
+				91DC18223010C5850053487E /* FileWebViewController.swift in Sources */,
 				91A52F63300B4FA10076FC08 /* Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
