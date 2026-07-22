@@ -108,8 +108,8 @@ private extension LoaderViewController {
     func setupConstraints() {
         NSLayoutConstraint.activate([
             linkTextFiled.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
-            linkTextFiled.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            linkTextFiled.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            linkTextFiled.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            linkTextFiled.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             linkTextFiled.heightAnchor.constraint(equalToConstant: 50),
             downloadButton.topAnchor.constraint(equalTo: linkTextFiled.bottomAnchor, constant: 16),
             downloadButton.leadingAnchor.constraint(equalTo: linkTextFiled.leadingAnchor),
@@ -140,6 +140,7 @@ private extension LoaderViewController {
         guard !downloads.contains(where: { $0.url == textUrl }) else {
             return showErrorAlert(with: "File already loading")
         }
+        downloadButton.isEnabled = false
         addLoadTask(textUrl: textUrl)
     }
     
@@ -150,11 +151,13 @@ private extension LoaderViewController {
                 let fetchedExtension = try await downloadManager.fetchFileExtension(from: textUrl)
                 await MainActor.run {
                     addDownloadModel(textUrl: textUrl, fethedExtension: fetchedExtension)
+                    downloadButton.isEnabled = true
                 }
                 try await downloadFileWithProgress(stream: stream, textUrl: textUrl)
             } catch {
                 await MainActor.run {
                     showErrorAlert(with: error.localizedDescription)
+                    downloadButton.isEnabled = true
                 }
             }
             activeDownloadTasks.removeValue(forKey: textUrl)
@@ -167,8 +170,10 @@ private extension LoaderViewController {
         if !proposedName.contains("."), let fethedExtension {
             proposedName = "\(proposedName).\(fethedExtension)"
         }
+        
         let newDownload = DownloadItem(url: textUrl,
-                                       title: proposedName)
+                                       title: proposedName,
+                                       progress: ProgressModel(totalSegments: 5))
         downloads.append(newDownload)
         downloadTableView.reloadData()
     }
@@ -177,9 +182,9 @@ private extension LoaderViewController {
                                   textUrl: String) async throws {
         for await status in stream {
             switch status {
-            case .progress(let fraction):
+            case .progress(let progress):
                 await MainActor.run {
-                    updateTableCell(for: textUrl, with: Float(fraction))
+                    updateTableCell(for: textUrl, with: progress)
                 }
             case .success(let localURL, let fileName):
                 try loadedFilesManager.addToTheDocumentDirectory(temporaryUrl: localURL,
@@ -202,7 +207,7 @@ private extension LoaderViewController {
         }
     }
     
-    func updateTableCell(for textUrl: String, with progress: Float) {
+    func updateTableCell(for textUrl: String, with progress: ProgressModel) {
         guard let modelIndex = downloads.firstIndex(where: { $0.url == textUrl }) else { return }
         downloads[modelIndex].progress = progress
         

@@ -81,14 +81,15 @@ extension LoaderTableViewCell {
         pauseContinueButton.isEnabled = true
     }
     
-    func updateProgress(_ progress: Float) {
-        progressView.progress = progress
+    func updateProgress(_ progress: ProgressModel) {
+        progressView.progress = progress.progress
+        infoLabel.text = "Total downloaded: \(progress.downloadedSegments)/\(progress.totalSegments) Active: \(progress.activeSegments)/\(progress.expectedActive)"
     }
     
     func setupCell(with model: DownloadItem) {
         titleLabel.text = model.title
         urlLaberl.text = model.url
-        progressView.progress = model.progress
+        progressView.progress = model.progress.progress
     }
     
 }
@@ -113,7 +114,7 @@ private extension LoaderTableViewCell {
             urlLaberl.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             urlLaberl.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             urlLaberl.trailingAnchor.constraint(equalTo: contentView.centerXAnchor),
-            urlLaberl.bottomAnchor.constraint(lessThanOrEqualTo: progressView.topAnchor, constant: -4),
+            urlLaberl.bottomAnchor.constraint(lessThanOrEqualTo: progressView.topAnchor, constant: -16),
             progressView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             progressView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             progressView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -2),
