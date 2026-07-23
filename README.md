@@ -23,6 +23,7 @@ Downloads can be paused and resumed at any time.
 <p align="center">
 
   <img src="https://github.com/user-attachments/assets/89b6d144-2e14-4c64-8f7b-a14505d46a5c" width="320">
+  <img src="https://github.com/user-attachments/assets/a8fa317d-0396-48f2-93c6-f46a247eead5" width="320">
 
 </p>
 
@@ -33,10 +34,10 @@ Downloads can be paused and resumed at any time.
 Customize download settings and parameters.
 
 <p align="center">
-
-  <img src="https://github.com/user-attachments/assets/a8fa317d-0396-48f2-93c6-f46a247eead5" width="320">
+  <img src="https://github.com/user-attachments/assets/23433a6d-e18e-4504-823e-feb2b56b73c7" width="320">
 
 </p>
+
 
 ---
 
@@ -44,11 +45,6 @@ Customize download settings and parameters.
 
 View downloaded files directly in a WebView.
 
-<p align="center">
-
-  <img src="https://github.com/user-attachments/assets/23433a6d-e18e-4504-823e-feb2b56b73c7" width="320">
-
-</p>
 
 <p align="center">
 
