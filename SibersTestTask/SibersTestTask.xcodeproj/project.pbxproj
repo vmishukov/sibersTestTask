@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		910A368C3011FBD600A2CDA5 /* FileWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 910A368B3011FBD600A2CDA5 /* FileWriter.swift */; };
+		910A368E3011FC1100A2CDA5 /* ProgressModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 910A368D3011FC1100A2CDA5 /* ProgressModel.swift */; };
+		910A369130120E0700A2CDA5 /* FileMetadataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 910A369030120E0700A2CDA5 /* FileMetadataService.swift */; };
+		910A36933012109600A2CDA5 /* FileDownloadActor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 910A36923012109600A2CDA5 /* FileDownloadActor.swift */; };
 		91A52F58300A2B2D0076FC08 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 91A52F4F300A2B2D0076FC08 /* Assets.xcassets */; };
 		91A52F5A300A2B2D0076FC08 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 91A52F52300A2B2D0076FC08 /* LaunchScreen.storyboard */; };
 		91A52F5B300A2B2D0076FC08 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F4E300A2B2D0076FC08 /* AppDelegate.swift */; };
@@ -25,6 +29,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		910A368B3011FBD600A2CDA5 /* FileWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWriter.swift; sourceTree = "<group>"; };
+		910A368D3011FC1100A2CDA5 /* ProgressModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressModel.swift; sourceTree = "<group>"; };
+		910A369030120E0700A2CDA5 /* FileMetadataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileMetadataService.swift; sourceTree = "<group>"; };
+		910A36923012109600A2CDA5 /* FileDownloadActor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDownloadActor.swift; sourceTree = "<group>"; };
 		91A52F30300A26CB0076FC08 /* SibersTestTask.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SibersTestTask.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		91A52F4E300A2B2D0076FC08 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		91A52F4F300A2B2D0076FC08 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -55,6 +63,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		910A368F30120DEF00A2CDA5 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				910A369030120E0700A2CDA5 /* FileMetadataService.swift */,
+				910A368B3011FBD600A2CDA5 /* FileWriter.swift */,
+				910A36923012109600A2CDA5 /* FileDownloadActor.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
 		91A52F27300A26CB0076FC08 = {
 			isa = PBXGroup;
 			children = (
@@ -80,6 +98,7 @@
 				91A52F50300A2B2D0076FC08 /* Info.plist */,
 				91A52F52300A2B2D0076FC08 /* LaunchScreen.storyboard */,
 				91A52F6F300E043D0076FC08 /* Model */,
+				910A368F30120DEF00A2CDA5 /* Services */,
 				91A52F6E300BAD890076FC08 /* Managers */,
 				91A52F54300A2B2D0076FC08 /* MainTabBarController.swift */,
 				91A52F64300B51F80076FC08 /* Loader */,
@@ -122,6 +141,7 @@
 			isa = PBXGroup;
 			children = (
 				91A52F70300E06C80076FC08 /* DownloadItem.swift */,
+				910A368D3011FC1100A2CDA5 /* ProgressModel.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -204,13 +224,17 @@
 				91A52F6D300BAC470076FC08 /* LoadedFilesManager.swift in Sources */,
 				91A52F5D300A2B2D0076FC08 /* MainTabBarController.swift in Sources */,
 				91A52F5E300A2B2D0076FC08 /* SavedFilesViewController.swift in Sources */,
+				910A36933012109600A2CDA5 /* FileDownloadActor.swift in Sources */,
 				91A52F6B300BAA3B0076FC08 /* DownloadNetworkManager.swift in Sources */,
+				910A369130120E0700A2CDA5 /* FileMetadataService.swift in Sources */,
 				91A52F69300B94910076FC08 /* SavedFilesTableViewCell.swift in Sources */,
 				91A52F5F300A2B2D0076FC08 /* SceneDelegate.swift in Sources */,
 				91A52F71300E06C80076FC08 /* DownloadItem.swift in Sources */,
+				910A368E3011FC1100A2CDA5 /* ProgressModel.swift in Sources */,
 				91A52F61300A342D0076FC08 /* SettingsViewController.swift in Sources */,
 				91A52F66300B520E0076FC08 /* LoaderTableViewCell.swift in Sources */,
 				91DC18223010C5850053487E /* FileWebViewController.swift in Sources */,
+				910A368C3011FBD600A2CDA5 /* FileWriter.swift in Sources */,
 				91A52F63300B4FA10076FC08 /* Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
