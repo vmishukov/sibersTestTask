@@ -49,6 +49,6 @@ View downloaded files directly in a WebView.
 
 <p align="center">
   <img alt="IMG_9109" src="https://github.com/user-attachments/assets/a1aff432-c765-4013-bf43-350f53118ad9" width="320">
-  <img src="https://github.com/user-attachments/assets/0bba9b09-2d60-4e1a-b6ed-be9a964367ef" >
+  <img src="https://github.com/user-attachments/assets/0bba9b09-2d60-4e1a-b6ed-be9a964367ef" width="320">
 
 </p>
