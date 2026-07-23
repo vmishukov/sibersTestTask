@@ -13,13 +13,30 @@ enum ExtensionError: Error {
     case cannotDetermineSize
 }
 
+/// Events emitted while a file download is running.
 enum DownloadStatus {
+    /// Partial progress update for UI rendering.
     case progress(ProgressModel)
+    /// Download was paused manually or because the concurrent-files limit was reached.
     case pausedByRequest
+    /// Download finished successfully.
     case success(localURL: URL, fileName: String?)
+    /// Download failed and cannot continue without user action.
     case failure(Error)
 }
 
+/// Coordinates multiple file downloads and enforces concurrency limits.
+///
+/// `DownloadNetworkManager` is the entry point for the download feature. It:
+/// - fetches remote metadata and creates one `FileDownloadActor` per URL;
+/// - keeps at most `maxConcurrentFiles` downloads active at the same time;
+/// - puts excess downloads on pause instead of keeping them in a waiting queue;
+/// - preempts the most recently started active download when a paused download is resumed at capacity.
+///
+/// Download actors are stored in three buckets:
+/// - `activeDownloads` — currently downloading;
+/// - `pausedDownloads` — created or paused and waiting for user resume;
+/// - `pendingActors` — metadata fetched but not yet activated.
 actor DownloadNetworkManager {
     
     private let defaultMaxSegments = 5
@@ -55,6 +72,7 @@ actor DownloadNetworkManager {
     private var session: URLSession
     private let metadataService: FileMetadataService
     
+    /// Creates the manager and registers default download settings in `UserDefaults`.
     init() {
         let configuration = URLSessionConfiguration.default
         configuration.httpMaximumConnectionsPerHost = 10
@@ -65,8 +83,17 @@ actor DownloadNetworkManager {
         }
     }
     
-    // MARK: - Публичные методы
+    // MARK: - Public API
     
+    /// Starts a new download or returns the current stream for an existing one.
+    ///
+    /// Behavior by state:
+    /// - paused: returns a stream that immediately emits `.pausedByRequest` without starting work;
+    /// - active: returns a fresh stream from the running actor;
+    /// - pending/new: activates immediately when capacity is available, otherwise stores the actor as paused.
+    ///
+    /// - Parameter urlString: Remote file URL.
+    /// - Returns: Stream of download status updates.
     func downloadFile(from urlString: String) async throws -> AsyncStream<DownloadStatus> {
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
         if pausedDownloads[url] != nil {
@@ -92,6 +119,13 @@ actor DownloadNetworkManager {
         return await activateOrPause(actor: actor, url: url)
     }
     
+    /// Resumes a paused download and preempts another active download when at capacity.
+    ///
+    /// If the concurrent-files limit is already reached, the most recently started active download
+    /// is paused and the requested download takes its slot.
+    ///
+    /// - Parameter urlString: Remote file URL.
+    /// - Returns: Stream of download status updates for the resumed download.
     func resumeDownload(for urlString: String) async throws -> AsyncStream<DownloadStatus> {
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
         
@@ -108,6 +142,9 @@ actor DownloadNetworkManager {
         return try await downloadFile(from: urlString)
     }
     
+    /// Pauses an active download or moves a not-yet-started download into the paused bucket.
+    ///
+    /// - Parameter urlString: Remote file URL.
     func pauseDownload(for urlString: String) async {
         guard let url = URL(string: urlString) else { return }
         if let actor = activeDownloads[url] {
@@ -121,14 +158,16 @@ actor DownloadNetworkManager {
         }
     }
     
+    /// Fetches the remote file extension without starting a download.
     func fetchFileExtension(from urlString: String) async throws -> String? {
         guard let url = URL(string: urlString) else { return nil }
         let metadata = try await metadataService.fetchMetadata(from: url)
         return metadata.ext
     }
     
-    // MARK: Saving / Resuming
+    // MARK: - Persistence
     
+    /// Serializes active and paused downloads so they can be restored after app restart.
     func saveState() async throws -> Data {
         var state: [[String: Any]] = []
         
@@ -157,6 +196,12 @@ actor DownloadNetworkManager {
         return try JSONSerialization.data(withJSONObject: state, options: .prettyPrinted)
     }
     
+    /// Restores paused downloads from serialized state.
+    ///
+    /// Restored actors are placed into `pausedDownloads` and must be resumed explicitly by the UI.
+    ///
+    /// - Parameter data: JSON produced by `saveState()`.
+    /// - Returns: URLs that were successfully restored.
     func loadState(from data: Data) async -> [URL] {
         var restoredURLs: [URL] = []
         guard let array = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return restoredURLs }
@@ -189,6 +234,7 @@ actor DownloadNetworkManager {
         return restoredURLs
     }
     
+    /// Alias for `resumeDownload(for:)` kept for call sites that express user-driven prioritization.
     func prioritizeDownload(for urlString: String) async throws -> AsyncStream<DownloadStatus> {
         try await resumeDownload(for: urlString)
     }
@@ -197,6 +243,7 @@ actor DownloadNetworkManager {
 // MARK: - PRIVATE METHODS
 private extension DownloadNetworkManager {
     
+    /// Activates a download immediately or stores it as paused when the concurrent limit is reached.
     func activateOrPause(actor: FileDownloadActor, url: URL) async -> AsyncStream<DownloadStatus> {
         if activeDownloads.count < maxConcurrentFilesLimit {
             return await activateNow(actor: actor, url: url)
@@ -206,6 +253,7 @@ private extension DownloadNetworkManager {
         return makePausedStream()
     }
     
+    /// Starts a paused/pending actor, preempting another download when necessary.
     func resumeDownload(actor: FileDownloadActor, url: URL) async -> AsyncStream<DownloadStatus> {
         if activeDownloads.count >= maxConcurrentFilesLimit {
             await preemptLastActiveDownload(excluding: url)
@@ -213,6 +261,7 @@ private extension DownloadNetworkManager {
         return await activateNow(actor: actor, url: url)
     }
     
+    /// Moves an actor into the active set and wraps its stream with lifecycle handling.
     func activateNow(actor: FileDownloadActor, url: URL) async -> AsyncStream<DownloadStatus> {
         pendingActors.removeValue(forKey: url)
         activeDownloads[url] = actor
@@ -221,6 +270,7 @@ private extension DownloadNetworkManager {
         return makeWrappedStream(url: url, rawStream: rawStream)
     }
     
+    /// Pauses the most recently started active download to free a slot for another URL.
     func preemptLastActiveDownload(excluding excludedURL: URL) async {
         guard let victimURL = activeDownloadOrder.last(where: { $0 != excludedURL }),
               let victimActor = activeDownloads[victimURL] else { return }
@@ -230,6 +280,7 @@ private extension DownloadNetworkManager {
         pausedDownloads[victimURL] = victimActor
     }
     
+    /// Creates a stream that reports a paused state without starting network work.
     func makePausedStream() -> AsyncStream<DownloadStatus> {
         AsyncStream { continuation in
             continuation.yield(.pausedByRequest)
@@ -241,6 +292,7 @@ private extension DownloadNetworkManager {
         activeDownloadOrder.removeAll { $0 == url }
     }
     
+    /// Forwards actor events to the caller and performs cleanup when the stream finishes.
     func makeWrappedStream(url: URL, rawStream: AsyncStream<DownloadStatus>) -> AsyncStream<DownloadStatus> {
         AsyncStream { continuation in
             let task = Task {
@@ -257,6 +309,7 @@ private extension DownloadNetworkManager {
         }
     }
     
+    /// Removes bookkeeping entries after a download stream completes.
     func handleDownloadCompletion(url: URL) async {
         if activeDownloads[url] != nil {
             activeDownloads.removeValue(forKey: url)
@@ -265,6 +318,7 @@ private extension DownloadNetworkManager {
         pendingActors[url] = nil
     }
     
+    /// Registers fallback values for user-configurable download settings.
     func registerDefaultSettings() {
         let defaults = UserDefaults.standard
         defaults.register(defaults: [

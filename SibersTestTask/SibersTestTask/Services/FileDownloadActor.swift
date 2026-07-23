@@ -7,8 +7,17 @@
 
 import Foundation
 
+/// Downloads a single remote file using HTTP range requests and parallel segment workers.
+///
+/// `FileDownloadActor` owns one download session: it splits the file into fixed-size segments,
+/// fetches up to `maxSegmentsPerFile` segments concurrently, writes them into a temporary file,
+/// and emits progress through an `AsyncStream<DownloadStatus>`.
+///
+/// The actor is pause-aware. Pausing cancels the main download loop and all in-flight segment
+/// tasks so no background work continues after `.pausedByRequest` is emitted.
 actor FileDownloadActor {
     
+    /// Remote URL of the file being downloaded.
     let url: URL
     private let metadata: (size: Int64, ext: String?)
     private var destinationURL: URL?
@@ -27,6 +36,16 @@ actor FileDownloadActor {
     private let maxRetries: Int
     private let session: URLSession
     
+    /// Creates a download actor for a remote file.
+    ///
+    /// - Parameters:
+    ///   - url: Remote file URL.
+    ///   - metadata: File size in bytes and optional extension resolved from HTTP headers.
+    ///   - destinationURL: Existing partial file path when resuming a saved download; `nil` for a new download.
+    ///   - maxSegmentSizeBytes: Maximum byte size of each HTTP range segment.
+    ///   - maxSegmentsPerFile: Maximum number of segments downloaded in parallel for this file.
+    ///   - maxRetries: Number of retry attempts per failed segment.
+    ///   - session: Shared `URLSession` used for range requests.
     init(url: URL,
          metadata: (size: Int64, ext: String?),
          destinationURL: URL? = nil,
@@ -44,6 +63,13 @@ actor FileDownloadActor {
     }
     
     // MARK: - Public Methods
+    
+    /// Starts or restarts the download and returns a stream of status updates.
+    ///
+    /// Calling `start()` again cancels any previous loop for this actor and attaches a new stream.
+    /// The stream finishes on success, failure, or when `pause()` is called.
+    ///
+    /// - Returns: An `AsyncStream` that yields progress, pause, success, or failure events.
     func start() -> AsyncStream<DownloadStatus> {
         AsyncStream { continuation in
             self.continuation = continuation
@@ -66,6 +92,10 @@ actor FileDownloadActor {
         }
     }
     
+    /// Pauses the download and stops all background work for this file.
+    ///
+    /// Cancels the main download loop, cancels in-flight segment tasks, closes the file handle,
+    /// and emits `.pausedByRequest` before finishing the active stream.
     func pause() async {
         isPaused = true
         downloadLoopTask?.cancel()
@@ -83,10 +113,20 @@ actor FileDownloadActor {
         continuation = nil
     }
     
+    /// Returns a snapshot of persisted download progress.
+    ///
+    /// Used when saving application state before backgrounding or termination.
+    ///
+    /// - Returns: Temporary file path and indices of completed segments.
     func getState() -> (filePath: String?, downloadedSegments: [Int]) {
         (destinationURL?.path, segmentsMap.filter { $0.value }.map { $0.key })
     }
     
+    /// Restores segment progress from a previously saved state.
+    ///
+    /// - Parameters:
+    ///   - segments: Indices of segments that were already downloaded.
+    ///   - filePath: Path to the existing partial file on disk.
     func restoreState(segments: [Int], filePath: String?) {
         if let filePath {
             destinationURL = URL(fileURLWithPath: filePath)
@@ -100,6 +140,10 @@ actor FileDownloadActor {
 // MARK: - PRIVATE EXTENSION
 private extension FileDownloadActor {
     
+    /// Main download scheduler.
+    ///
+    /// Keeps launching segment tasks until every segment is complete or the download is paused/cancelled.
+    /// Respects `maxSegmentsPerFile` by tracking how many segment tasks are currently active.
     func runDownloadLoop() async throws {
         let totalSegments = Int(ceil(Double(metadata.size) / Double(maxSegmentSizeBytes)))
         if segmentsMap.isEmpty {
@@ -177,6 +221,10 @@ private extension FileDownloadActor {
         }
     }
     
+    /// Downloads one byte range and writes it to the destination file.
+    ///
+    /// Retries failed requests up to `maxRetries`. On permanent failure, emits `.failure` and stops
+    /// the entire download.
     func downloadSegment(index: Int, start: Int64, end: Int64) async {
         var success = false
         var lastError: Error?
@@ -224,6 +272,7 @@ private extension FileDownloadActor {
     
     // MARK: Helpers
     
+    /// Emits a progress snapshot to the active stream consumer.
     func sendProgress(totalSegments: Int) {
         let downloaded = downloadedCount
         let downloadedBytes = calculateDownloadedBytes(fileSize: metadata.size)
@@ -273,6 +322,9 @@ private extension FileDownloadActor {
         return baseName.contains(".") ? baseName : "\(baseName).\(ext ?? "bin")"
     }
     
+    /// Performs one HTTP range request with a hard timeout.
+    ///
+    /// Uses a racing task group so a slow network call cannot block the segment worker indefinitely.
     func downloadRangeWithTimeout(start: Int64, end: Int64, seconds: TimeInterval) async throws -> Data {
         try await withThrowingTaskGroup(of: Data.self) { group in
             group.addTask {
