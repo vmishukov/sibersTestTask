@@ -14,14 +14,12 @@ final class LoaderTableViewCell: UITableViewCell {
     private var titleLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "DeadPool 2016.MP4"
         return label
     }()
     
     private var urlLaberl: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "https://www.youtube.com/watch?v=oIAMxQ1KLiI"
         label.font = .systemFont(ofSize: 9, weight: .light)
         label.textColor = .systemGray
         label.numberOfLines = 4
@@ -37,7 +35,7 @@ final class LoaderTableViewCell: UITableViewCell {
         return progressView
     }()
     
-    private var pauseContinueButton: UIButton = {
+    private(set) var pauseContinueButton: UIButton = {
         var config = UIButton.Configuration.filled()
         config.image = UIImage(systemName: "pause.fill")
         let button = UIButton(configuration: config)
@@ -88,8 +86,35 @@ extension LoaderTableViewCell {
     
     func setupCell(with model: DownloadItem) {
         titleLabel.text = model.title
+        updateProgress(model.progress)
         urlLaberl.text = model.url
-        progressView.progress = model.progress.progress
+        switch model.state {
+        case .waiting:
+            infoLabel.text = "In Queue..."
+            setPauseStatus(true)
+            pauseContinueButton.isEnabled = true
+            
+        case .downloading:
+            setPauseStatus(false)
+            pauseContinueButton.isEnabled = true
+            
+        case .paused:
+            infoLabel.text = "Paused"
+            setPauseStatus(true)
+            pauseContinueButton.isEnabled = true
+        }
+    }
+    
+    func configureAsDownloading() {
+        infoLabel.text = nil
+        pauseContinueButton.setImage(UIImage(systemName: "pause.fill"), for: .normal)
+        pauseContinueButton.isEnabled = true
+    }
+    
+    func configureAsPaused() {
+        infoLabel.text = "Paused"
+        pauseContinueButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
+        pauseContinueButton.isEnabled = true
     }
     
 }
