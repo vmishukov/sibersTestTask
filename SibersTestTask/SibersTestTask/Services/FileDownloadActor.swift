@@ -22,7 +22,6 @@ actor FileDownloadActor {
     private let metadata: (size: Int64, ext: String?)
     private var destinationURL: URL?
     private var segmentsMap: [Int: Bool] = [:]
-    private var fileHandle: FileHandle?
     private var fileWriter: FileWriter?
     private var activeTasks: [Task<Void, Never>] = []
     private var downloadLoopTask: Task<Void, Never>?
@@ -106,7 +105,6 @@ actor FileDownloadActor {
         
         try? await fileWriter?.close()
         fileWriter = nil
-        fileHandle = nil
         
         continuation?.yield(.pausedByRequest)
         continuation?.finish()
@@ -159,57 +157,27 @@ private extension FileDownloadActor {
         guard let destinationURL else { throw URLError(.cannotCreateFile) }
         
         let handle = try FileHandle(forWritingTo: destinationURL)
-        self.fileHandle = handle
         self.fileWriter = FileWriter(handle: handle)
         defer {
             Task {
                 try? await fileWriter?.close()
                 fileWriter = nil
-                fileHandle = nil
             }
         }
         
         nextSegmentIndex = getFirstUnfinishedSegmentIndex(totalSegments: totalSegments)
         activeSegmentsCount = 0
-        
-        while downloadedCount < totalSegments {
-            if Task.isCancelled || isPaused { break }
-            
-            let active = activeSegmentsCount
-            var idx = nextSegmentIndex
-            
-            if active < maxSegmentsPerFile && idx < totalSegments {
-                while idx < totalSegments && segmentsMap[idx] == true {
-                    idx += 1
-                }
-                guard idx < totalSegments else { continue }
-                
-                let segmentToDownload = idx
-                nextSegmentIndex = idx + 1
-                activeSegmentsCount += 1
-                
-                let startByte = Int64(segmentToDownload) * maxSegmentSizeBytes
-                let endByte = min(startByte + maxSegmentSizeBytes - 1, metadata.size - 1)
-                sendProgress(totalSegments: totalSegments)
-                
-                let task = Task { [weak self] in
-                    guard let self else { return }
-                    await self.downloadSegment(index: segmentToDownload,
-                                               start: startByte,
-                                               end: endByte)
-                    await self.decrementActiveSegments()
-                }
-                activeTasks.append(task)
-            }
-            
-            try? await Task.sleep(nanoseconds: 50_000_000)
-        }
-        
+        startDownloadFile(with: totalSegments)
+    }
+    
+    func endDownloadFileWithSuccess() async throws {
         for task in activeTasks {
             await task.value
         }
+        
         activeTasks.removeAll()
         
+        guard let destinationURL else { throw URLError(.cannotCreateFile) }
         if !Task.isCancelled, !isPaused {
             try? await fileWriter?.close()
             let finalFileName = makeFileName(ext: metadata.ext)
@@ -218,6 +186,59 @@ private extension FileDownloadActor {
             continuation = nil
             segmentsMap.removeAll()
             self.destinationURL = nil
+        }
+    }
+    
+    func startDownloadFile(with totalSegments: Int)  {
+        while activeSegmentsCount < maxSegmentsPerFile {
+            if Task.isCancelled || isPaused { break }
+            queueSegmentDownload(with: totalSegments)
+        }
+    }
+    
+    /// Evaluates, prepares, and dispatches a single segment for download.
+    ///
+    /// This method checks concurrency limits, skips already downloaded segments using `segmentsMap`,
+    /// calculates byte ranges, and spawns a background `Task` to fetch the segment data. If all
+    /// segments are processed, it triggers the successful completion of the file download.
+    ///
+    /// - Parameter totalSegments: The total number of segments the file is divided into.
+    func queueSegmentDownload(with totalSegments: Int) {
+        guard !Task.isCancelled || !isPaused else { return }
+        
+        let active = activeSegmentsCount
+        var currentSegmentIndex = nextSegmentIndex
+        guard currentSegmentIndex < totalSegments else {
+            Task {
+                try? await endDownloadFileWithSuccess()
+            }
+            return
+        }
+        
+        if active < maxSegmentsPerFile {
+            while currentSegmentIndex < totalSegments && segmentsMap[currentSegmentIndex] == true {
+                currentSegmentIndex += 1
+            }
+            
+            guard currentSegmentIndex < totalSegments else { return }
+            
+            let segmentToDownload = currentSegmentIndex
+            nextSegmentIndex = currentSegmentIndex + 1
+            activeSegmentsCount += 1
+            
+            let startByte = Int64(segmentToDownload) * maxSegmentSizeBytes
+            let endByte = min(startByte + maxSegmentSizeBytes - 1, metadata.size - 1)
+            sendProgress(totalSegments: totalSegments)
+            
+            let task = Task { [weak self] in
+                guard let self else { return }
+                await self.downloadSegment(index: segmentToDownload,
+                                           start: startByte,
+                                           end: endByte)
+                await self.decrementActiveSegments()
+                await queueSegmentDownload(with: totalSegments)
+            }
+            activeTasks.append(task)
         }
     }
     
@@ -241,7 +262,6 @@ private extension FileDownloadActor {
             } catch {
                 if Task.isCancelled { return }
                 lastError = error
-                try? await Task.sleep(nanoseconds: 1_500_000_000)
             }
         }
         
@@ -260,7 +280,6 @@ private extension FileDownloadActor {
                 continuation?.yield(.failure(lastError))
                 try? await fileWriter?.close()
                 fileWriter = nil
-                fileHandle = nil
                 continuation?.finish()
                 continuation = nil
                 
