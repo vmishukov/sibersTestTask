@@ -96,9 +96,7 @@ actor DownloadNetworkManager {
     /// - Returns: Stream of download status updates.
     func downloadFile(from urlString: String) async throws -> AsyncStream<DownloadStatus> {
         guard let url = URL(string: urlString) else { throw URLError(.badURL) }
-        if pausedDownloads[url] != nil {
-            return makePausedStream()
-        }
+        guard pausedDownloads[url] == nil else { return makePausedStream() }
         if let actor = activeDownloads[url] {
             return await actor.start()
         }
@@ -234,10 +232,6 @@ actor DownloadNetworkManager {
         return restoredURLs
     }
     
-    /// Alias for `resumeDownload(for:)` kept for call sites that express user-driven prioritization.
-    func prioritizeDownload(for urlString: String) async throws -> AsyncStream<DownloadStatus> {
-        try await resumeDownload(for: urlString)
-    }
 }
 
 // MARK: - PRIVATE METHODS

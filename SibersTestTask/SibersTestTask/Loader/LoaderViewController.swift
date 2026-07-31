@@ -57,7 +57,6 @@ final class LoaderViewController: UIViewController {
     
     private var downloadManager = DownloadNetworkManager()
     private var loadedFilesManager: LoadedFilesManager
-    private var activeDownloadTasks: [String: Task<Void, Never>] = [:]
     private var downloads: [DownloadItem] = []
     
     init(loadedFilesManager: LoadedFilesManager) {
@@ -151,9 +150,8 @@ private extension LoaderViewController {
         addLoadTask(textUrl: textUrl)
     }
     
-    
     func addLoadTask(textUrl: String) {
-        let loadTask = Task {
+        Task {
             do {
                 let stream = try await downloadManager.downloadFile(from: textUrl)
                 let fetchedExtension = try await downloadManager.fetchFileExtension(from: textUrl)
@@ -181,11 +179,8 @@ private extension LoaderViewController {
                     showErrorAlert(with: error.localizedDescription)
                 }
             }
-            activeDownloadTasks.removeValue(forKey: textUrl)
         }
-        activeDownloadTasks[textUrl] = loadTask
     }
-    
     
     func addDownloadModel(textUrl: String, fethedExtension: String?) {
         var proposedName = URL(string: textUrl)?.lastPathComponent ?? "Скачиваемый файл"
