@@ -54,10 +54,10 @@ actor DownloadNetworkManager: DownloadNetworkManagerProtocol {
     private let defaultMaxConcurrentFiles = 3
     private let defaultRetryAttempts = 3
     
-    private var activeDownloads: [URL: FileDownloadActor] = [:]
+    private var activeDownloads: [URL: FileDownloadActorProtocol] = [:]
     private var activeDownloadOrder: [URL] = []
-    private var pausedDownloads: [URL: FileDownloadActor] = [:]
-    private var pendingActors: [URL: FileDownloadActor] = [:]
+    private var pausedDownloads: [URL: FileDownloadActorProtocol] = [:]
+    private var pendingActors: [URL: FileDownloadActorProtocol] = [:]
     
     // MARK: - Dynamic settings
     private var maxSegmentsPerFile: Int {
@@ -80,7 +80,7 @@ actor DownloadNetworkManager: DownloadNetworkManagerProtocol {
     }
     
     private var session: URLSession
-    private let metadataService: FileMetadataService
+    private let metadataService: FileMetadataServiceProtocol
     
     /// Creates the manager and registers default download settings in `UserDefaults`.
     init() {
@@ -248,7 +248,7 @@ actor DownloadNetworkManager: DownloadNetworkManagerProtocol {
 private extension DownloadNetworkManager {
     
     /// Activates a download immediately or stores it as paused when the concurrent limit is reached.
-    func activateOrPause(actor: FileDownloadActor, url: URL) async -> AsyncStream<DownloadStatus> {
+    func activateOrPause(actor: FileDownloadActorProtocol, url: URL) async -> AsyncStream<DownloadStatus> {
         if activeDownloads.count < maxConcurrentFilesLimit {
             return await activateNow(actor: actor, url: url)
         }
@@ -258,7 +258,7 @@ private extension DownloadNetworkManager {
     }
     
     /// Starts a paused/pending actor, preempting another download when necessary.
-    func resumeDownload(actor: FileDownloadActor, url: URL) async -> AsyncStream<DownloadStatus> {
+    func resumeDownload(actor: FileDownloadActorProtocol, url: URL) async -> AsyncStream<DownloadStatus> {
         if activeDownloads.count >= maxConcurrentFilesLimit {
             await preemptLastActiveDownload(excluding: url)
         }
@@ -266,7 +266,7 @@ private extension DownloadNetworkManager {
     }
     
     /// Moves an actor into the active set and wraps its stream with lifecycle handling.
-    func activateNow(actor: FileDownloadActor, url: URL) async -> AsyncStream<DownloadStatus> {
+    func activateNow(actor: FileDownloadActorProtocol, url: URL) async -> AsyncStream<DownloadStatus> {
         pendingActors.removeValue(forKey: url)
         activeDownloads[url] = actor
         activeDownloadOrder.append(url)
