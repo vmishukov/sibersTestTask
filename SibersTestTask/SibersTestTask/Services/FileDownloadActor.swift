@@ -7,6 +7,15 @@
 
 import Foundation
 
+protocol FileDownloadActorProtocol: Actor {
+    
+    var url: URL { get }
+    func start() -> AsyncStream<DownloadStatus>
+    func pause() async
+    func getState() -> (filePath: String?, downloadedSegments: [Int])
+    func restoreState(segments: [Int], filePath: String?)
+}
+
 /// Downloads a single remote file using HTTP range requests and parallel segment workers.
 ///
 /// `FileDownloadActor` owns one download session: it splits the file into fixed-size segments,
@@ -15,7 +24,7 @@ import Foundation
 ///
 /// The actor is pause-aware. Pausing cancels the main download loop and all in-flight segment
 /// tasks so no background work continues after `.pausedByRequest` is emitted.
-actor FileDownloadActor {
+actor FileDownloadActor: FileDownloadActorProtocol {
     
     /// Remote URL of the file being downloaded.
     let url: URL

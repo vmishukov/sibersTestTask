@@ -11,6 +11,7 @@
 		910A368E3011FC1100A2CDA5 /* ProgressModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 910A368D3011FC1100A2CDA5 /* ProgressModel.swift */; };
 		910A369130120E0700A2CDA5 /* FileMetadataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 910A369030120E0700A2CDA5 /* FileMetadataService.swift */; };
 		910A36933012109600A2CDA5 /* FileDownloadActor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 910A36923012109600A2CDA5 /* FileDownloadActor.swift */; };
+		910A36ED3022269300A2CDA5 /* DefaultsKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 910A36EC3022269300A2CDA5 /* DefaultsKeys.swift */; };
 		91A52F58300A2B2D0076FC08 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 91A52F4F300A2B2D0076FC08 /* Assets.xcassets */; };
 		91A52F5A300A2B2D0076FC08 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 91A52F52300A2B2D0076FC08 /* LaunchScreen.storyboard */; };
 		91A52F5B300A2B2D0076FC08 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A52F4E300A2B2D0076FC08 /* AppDelegate.swift */; };
@@ -33,6 +34,7 @@
 		910A368D3011FC1100A2CDA5 /* ProgressModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressModel.swift; sourceTree = "<group>"; };
 		910A369030120E0700A2CDA5 /* FileMetadataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileMetadataService.swift; sourceTree = "<group>"; };
 		910A36923012109600A2CDA5 /* FileDownloadActor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDownloadActor.swift; sourceTree = "<group>"; };
+		910A36EC3022269300A2CDA5 /* DefaultsKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultsKeys.swift; sourceTree = "<group>"; };
 		91A52F30300A26CB0076FC08 /* SibersTestTask.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SibersTestTask.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		91A52F4E300A2B2D0076FC08 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		91A52F4F300A2B2D0076FC08 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -73,6 +75,18 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		910A36EB302220EE00A2CDA5 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				91A52F54300A2B2D0076FC08 /* MainTabBarController.swift */,
+				91A52F64300B51F80076FC08 /* Loader */,
+				91A52F67300B90D50076FC08 /* SavedFiles */,
+				91DC18213010C5850053487E /* FileWebViewController.swift */,
+				91A52F60300A342D0076FC08 /* SettingsViewController.swift */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
 		91A52F27300A26CB0076FC08 = {
 			isa = PBXGroup;
 			children = (
@@ -100,11 +114,7 @@
 				91A52F6F300E043D0076FC08 /* Model */,
 				910A368F30120DEF00A2CDA5 /* Services */,
 				91A52F6E300BAD890076FC08 /* Managers */,
-				91A52F54300A2B2D0076FC08 /* MainTabBarController.swift */,
-				91A52F64300B51F80076FC08 /* Loader */,
-				91A52F67300B90D50076FC08 /* SavedFiles */,
-				91DC18213010C5850053487E /* FileWebViewController.swift */,
-				91A52F60300A342D0076FC08 /* SettingsViewController.swift */,
+				910A36EB302220EE00A2CDA5 /* View */,
 				91A52F62300B4FA10076FC08 /* Extensions.swift */,
 			);
 			path = SibersTestTask;
@@ -142,6 +152,7 @@
 			children = (
 				91A52F70300E06C80076FC08 /* DownloadItem.swift */,
 				910A368D3011FC1100A2CDA5 /* ProgressModel.swift */,
+				910A36EC3022269300A2CDA5 /* DefaultsKeys.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -220,6 +231,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				91A52F5B300A2B2D0076FC08 /* AppDelegate.swift in Sources */,
+				910A36ED3022269300A2CDA5 /* DefaultsKeys.swift in Sources */,
 				91A52F5C300A2B2D0076FC08 /* LoaderViewController.swift in Sources */,
 				91A52F6D300BAC470076FC08 /* LoadedFilesManager.swift in Sources */,
 				91A52F5D300A2B2D0076FC08 /* MainTabBarController.swift in Sources */,

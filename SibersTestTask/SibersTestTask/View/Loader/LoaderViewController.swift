@@ -55,12 +55,14 @@ final class LoaderViewController: UIViewController {
         return tableView
     }()
     
-    private var downloadManager = DownloadNetworkManager()
-    private var loadedFilesManager: LoadedFilesManager
+    private var downloadManager: DownloadNetworkManagerProtocol
+    private var loadedFilesManager: LoadedFilesManagerProtocol
     private var downloads: [DownloadItem] = []
     
-    init(loadedFilesManager: LoadedFilesManager) {
+    init(downloadManager: DownloadNetworkManagerProtocol,
+        loadedFilesManager: LoadedFilesManagerProtocol) {
         self.loadedFilesManager = loadedFilesManager
+        self.downloadManager = downloadManager
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -384,5 +386,5 @@ extension LoaderViewController: UITextFieldDelegate {
 }
 
 #Preview {
-    LoaderViewController(loadedFilesManager: LoadedFilesManager())
+    LoaderViewController(downloadManager: DownloadNetworkManager(), loadedFilesManager: LoadedFilesManager())
 }
