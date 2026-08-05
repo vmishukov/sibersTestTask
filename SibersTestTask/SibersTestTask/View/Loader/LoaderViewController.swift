@@ -160,7 +160,7 @@ private extension LoaderViewController {
                 
                 await MainActor.run {
                     if let index = downloads.firstIndex(where: { $0.url == textUrl }) {
-                        var name = URL(string: textUrl)?.lastPathComponent ?? "Скачиваемый файл"
+                        var name = URL(string: textUrl)?.lastPathComponent ?? "Loading file"
                         if !name.contains("."), let ext = fetchedExtension {
                             name = "\(name).\(ext)"
                         }
@@ -185,7 +185,7 @@ private extension LoaderViewController {
     }
     
     func addDownloadModel(textUrl: String, fethedExtension: String?) {
-        var proposedName = URL(string: textUrl)?.lastPathComponent ?? "Скачиваемый файл"
+        var proposedName = URL(string: textUrl)?.lastPathComponent ?? "Loading file"
         if !proposedName.contains("."), let ext = fethedExtension {
             proposedName = "\(proposedName).\(ext)"
         }
