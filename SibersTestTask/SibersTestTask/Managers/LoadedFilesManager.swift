@@ -7,11 +7,18 @@
 
 import Foundation
 
+protocol LoadedFilesManagerProtocol: AnyObject {
+    
+    var delegate: LoadedFilesManagerDelegate? { get set }
+    func addToTheDocumentDirectory(temporaryUrl: URL, fileName: String?) throws
+    func fetchDownloadedFiles() throws -> [URL]
+}
+
 protocol LoadedFilesManagerDelegate: AnyObject {
     func loadedFilesManagerDirectoryUpdated(_ manager: LoadedFilesManager, fileUrls: [URL])
 }
 
-final class LoadedFilesManager {
+final class LoadedFilesManager: LoadedFilesManagerProtocol {
     
     weak var delegate: LoadedFilesManagerDelegate?{
         didSet {

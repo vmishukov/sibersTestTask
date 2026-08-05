@@ -55,13 +55,14 @@ final class LoaderViewController: UIViewController {
         return tableView
     }()
     
-    private var downloadManager = DownloadNetworkManager()
-    private var loadedFilesManager: LoadedFilesManager
-    private var activeDownloadTasks: [String: Task<Void, Never>] = [:]
+    private var downloadManager: DownloadNetworkManagerProtocol
+    private var loadedFilesManager: LoadedFilesManagerProtocol
     private var downloads: [DownloadItem] = []
     
-    init(loadedFilesManager: LoadedFilesManager) {
+    init(downloadManager: DownloadNetworkManagerProtocol,
+        loadedFilesManager: LoadedFilesManagerProtocol) {
         self.loadedFilesManager = loadedFilesManager
+        self.downloadManager = downloadManager
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -151,9 +152,8 @@ private extension LoaderViewController {
         addLoadTask(textUrl: textUrl)
     }
     
-    
     func addLoadTask(textUrl: String) {
-        let loadTask = Task {
+        Task {
             do {
                 let stream = try await downloadManager.downloadFile(from: textUrl)
                 let fetchedExtension = try await downloadManager.fetchFileExtension(from: textUrl)
@@ -181,11 +181,8 @@ private extension LoaderViewController {
                     showErrorAlert(with: error.localizedDescription)
                 }
             }
-            activeDownloadTasks.removeValue(forKey: textUrl)
         }
-        activeDownloadTasks[textUrl] = loadTask
     }
-    
     
     func addDownloadModel(textUrl: String, fethedExtension: String?) {
         var proposedName = URL(string: textUrl)?.lastPathComponent ?? "Скачиваемый файл"
@@ -389,5 +386,5 @@ extension LoaderViewController: UITextFieldDelegate {
 }
 
 #Preview {
-    LoaderViewController(loadedFilesManager: LoadedFilesManager())
+    LoaderViewController(downloadManager: DownloadNetworkManager(), loadedFilesManager: LoadedFilesManager())
 }
