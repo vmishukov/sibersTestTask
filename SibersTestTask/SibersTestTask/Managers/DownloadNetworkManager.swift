@@ -8,6 +8,16 @@
 import Foundation
 import UniformTypeIdentifiers
 
+protocol DownloadNetworkManagerProtocol: Actor {
+    
+    func downloadFile(from urlString: String) async throws -> AsyncStream<DownloadStatus>
+    func resumeDownload(for urlString: String) async throws -> AsyncStream<DownloadStatus>
+    func pauseDownload(for urlString: String) async
+    func fetchFileExtension(from urlString: String) async throws -> String?
+    func saveState() async throws -> Data
+    func loadState(from data: Data) async -> [URL]
+}
+
 enum ExtensionError: Error {
     case invalidResponse
     case cannotDetermineSize
@@ -37,7 +47,7 @@ enum DownloadStatus {
 /// - `activeDownloads` — currently downloading;
 /// - `pausedDownloads` — created or paused and waiting for user resume;
 /// - `pendingActors` — metadata fetched but not yet activated.
-actor DownloadNetworkManager {
+actor DownloadNetworkManager: DownloadNetworkManagerProtocol {
     
     private let defaultMaxSegments = 5
     private let defaultMaxSegmentSizeMB = 5
@@ -51,22 +61,22 @@ actor DownloadNetworkManager {
     
     // MARK: - Dynamic settings
     private var maxSegmentsPerFile: Int {
-        UserDefaults.standard.integer(forKey: "maxSegmentsPerFile")
+        UserDefaults.standard.integer(forKey: DefaultsKeys.maxSegmentsPerFile.rawValue)
     }
     
     private var maxSegmentSizeBytes: Int64 {
-        let mb = UserDefaults.standard.integer(forKey: "maxSegmentSizeMB")
+        let mb = UserDefaults.standard.integer(forKey: DefaultsKeys.maxSegmentSizeMB.rawValue)
         let safeMB = mb > 0 ? mb : 5
         return Int64(safeMB) * 1024 * 1024
     }
     
     private var maxConcurrentFilesLimit: Int {
-        let value = UserDefaults.standard.integer(forKey: "maxConcurrentFiles")
+        let value = UserDefaults.standard.integer(forKey: DefaultsKeys.maxConcurrentFiles.rawValue)
         return value > 0 ? value : defaultMaxConcurrentFiles
     }
     
     private var maxRetries: Int {
-        UserDefaults.standard.integer(forKey: "retryAttempts")
+        UserDefaults.standard.integer(forKey: DefaultsKeys.retryAttempts.rawValue)
     }
     
     private var session: URLSession
@@ -316,10 +326,10 @@ private extension DownloadNetworkManager {
     func registerDefaultSettings() {
         let defaults = UserDefaults.standard
         defaults.register(defaults: [
-            "maxSegmentsPerFile": defaultMaxSegments,
-            "maxSegmentSizeMB": defaultMaxSegmentSizeMB,
-            "maxConcurrentFiles": defaultMaxConcurrentFiles,
-            "retryAttempts": defaultRetryAttempts
+            DefaultsKeys.maxSegmentsPerFile.rawValue: defaultMaxSegments,
+            DefaultsKeys.maxSegmentSizeMB.rawValue: defaultMaxSegmentSizeMB,
+            DefaultsKeys.maxConcurrentFiles.rawValue: defaultMaxConcurrentFiles,
+            DefaultsKeys.retryAttempts.rawValue: defaultRetryAttempts
         ])
     }
 }

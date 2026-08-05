@@ -95,10 +95,10 @@ private extension SettingsViewController {
     
     func loadCurrentSettings() {
         let defaults = UserDefaults.standard
-        maxSegmentsTextField.text = "\(defaults.integer(forKey: "maxSegmentsPerFile"))"
-        maxSegmentSizeTextField.text = "\(defaults.integer(forKey: "maxSegmentSizeMB"))"
-        maxConcurrentFilesTextField.text = "\(defaults.integer(forKey: "maxConcurrentFiles"))"
-        retryAttemptsTextField.text = "\(defaults.integer(forKey: "retryAttempts"))"
+        maxSegmentsTextField.text = "\(defaults.integer(forKey:  DefaultsKeys.maxSegmentsPerFile.rawValue))"
+        maxSegmentSizeTextField.text = "\(defaults.integer(forKey: DefaultsKeys.maxSegmentSizeMB.rawValue))"
+        maxConcurrentFilesTextField.text = "\(defaults.integer(forKey: DefaultsKeys.maxConcurrentFiles.rawValue))"
+        retryAttemptsTextField.text = "\(defaults.integer(forKey: DefaultsKeys.retryAttempts.rawValue))"
     }
     
     // MARK: - Immediate save on editing change

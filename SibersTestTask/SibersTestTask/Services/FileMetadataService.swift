@@ -8,7 +8,11 @@
 import Foundation
 import UniformTypeIdentifiers
 
-final class FileMetadataService {
+protocol FileMetadataServiceProtocol: Sendable {
+    func fetchMetadata(from url: URL) async throws -> (size: Int64, ext: String?)
+}
+
+final class FileMetadataService: FileMetadataServiceProtocol {
     private let session: URLSession
     
     nonisolated init(session: URLSession = .shared) {
