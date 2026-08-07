@@ -1,4 +1,4 @@
-# File Loader for Sibers
+# File Loader
 
 A file downloader with concurrent segmented downloading, background progress saving, pause and resume support, and a built-in file viewer.
 
